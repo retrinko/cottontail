@@ -22,7 +22,7 @@ class DefaultPayload implements PayloadInterface
     /**
      * DefaultPayload constructor.
      *
-     * @param string $data
+     * @param string|array $data
      */
     public function __construct($data = '')
     {
