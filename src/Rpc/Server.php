@@ -26,6 +26,7 @@ class Server
     use LoggerAwareTrait;
     use SerializerAwareTrait;
 
+    static $proceduresClass;
     /**
      * @var Connector
      */
@@ -46,8 +47,6 @@ class Server
      * @var RpcRequestMessage
      */
     protected $currentRequest;
-
-    static $proceduresClass;
 
     /**
      * @param string $server
@@ -190,6 +189,15 @@ class Server
     }
 
     /**
+     * Allow access/modification to $this->currentRequest before callback
+     * @return void
+     */
+    public function preCallback()
+    {
+
+    }
+
+    /**
      * @throws RemoteProcedureException
      */
     protected function callback()
@@ -219,6 +227,15 @@ class Server
     }
 
     /**
+     * Allow access/modification to $this->currentResponse after callback
+     * @return void
+     */
+    public function postCallback()
+    {
+
+    }
+
+    /**
      * @param RpcResponseMessage $response
      *
      * @return void
@@ -231,24 +248,6 @@ class Server
         // Publish reponse message
         $this->connector->basicPublish($response->toAMQPMessage(), '',
                                        $this->currentRequest->getReplyTo());
-
-    }
-
-    /**
-     * Allow access/modification to $this->currentRequest before callback
-     * @return void
-     */
-    public function preCallback()
-    {
-
-    }
-
-    /**
-     * Allow access/modification to $this->currentResponse after callback
-     * @return void
-     */
-    public function postCallback()
-    {
 
     }
 }

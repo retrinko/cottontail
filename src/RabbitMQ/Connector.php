@@ -67,45 +67,6 @@ class Connector
     }
 
     /**
-     * @param bool $forceReconnection
-     *
-     * @return void
-     */
-    public function connect($forceReconnection = false)
-    {
-        $env = ['server'=>$this->server, 'port'=>$this->port, 'vhost'=>$this->vhost];
-        if (true == $forceReconnection || false == ($this->connection instanceof AMQPConnection))
-        {
-            $this->logger->debug('Stablishing connection...', $env);
-            $this->connection = new AMQPConnection($this->server, $this->port, $this->user,
-                                                   $this->pass, $this->vhost);
-            $this->logger->info('Connection stablished!', $env);
-        }
-        elseif (false == $this->connection->isConnected())
-        {
-            $this->logger->debug('Restablishing connection...', $env);
-            $this->connection->reconnect();
-            $this->logger->info('Connection restablished!', $env);
-        }
-        $this->openChannel($forceReconnection);
-    }
-
-
-    /**
-     * @param bool $forceNewChannell
-     *
-     * @return void
-     */
-    protected function openChannel($forceNewChannell = false)
-    {
-        if (true == $forceNewChannell || false == ($this->channel instanceof AMQPChannel))
-        {
-            $this->channel = $this->connection->channel();
-            $this->logger->info('New channel opened!', [$this->channel->getChannelId()]);
-        }
-    }
-
-    /**
      * @return void
      */
     public function closeConnection()
@@ -132,6 +93,44 @@ class Connector
             $channelId = $this->channel->getChannelId();
             $this->channel->close();
             $this->logger->info('Channel clossed!', [$channelId]);
+        }
+    }
+
+    /**
+     * @param bool $forceReconnection
+     *
+     * @return void
+     */
+    public function connect($forceReconnection = false)
+    {
+        $env = ['server'=>$this->server, 'port'=>$this->port, 'vhost'=>$this->vhost];
+        if (true == $forceReconnection || false == ($this->connection instanceof AMQPConnection))
+        {
+            $this->logger->debug('Stablishing connection...', $env);
+            $this->connection = new AMQPConnection($this->server, $this->port, $this->user,
+                                                   $this->pass, $this->vhost);
+            $this->logger->info('Connection stablished!', $env);
+        }
+        elseif (false == $this->connection->isConnected())
+        {
+            $this->logger->debug('Restablishing connection...', $env);
+            $this->connection->reconnect();
+            $this->logger->info('Connection restablished!', $env);
+        }
+        $this->openChannel($forceReconnection);
+    }
+
+    /**
+     * @param bool $forceNewChannell
+     *
+     * @return void
+     */
+    protected function openChannel($forceNewChannell = false)
+    {
+        if (true == $forceNewChannell || false == ($this->channel instanceof AMQPChannel))
+        {
+            $this->channel = $this->connection->channel();
+            $this->logger->info('New channel opened!', [$this->channel->getChannelId()]);
         }
     }
 

@@ -67,25 +67,32 @@ class BasicMessage
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
-     *
-     * @return static
-     * @throws MessageException
+     * @return int
      */
-    public static function loadAMQPMessage(AMQPMessage $amqpMessage)
+    public function getTimestamp()
     {
-        $message = new static($amqpMessage->body, $amqpMessage->get_properties());
-        $message->checkRequiredPropertiesPresence($amqpMessage);
-
-        return $message;
+        return $this->getProperty(static::PROPERTY_TIMESTAMP);
     }
 
     /**
-     * @return AMQPMessage
+     * @param string $name
+     * @param string $default
+     *
+     * @return string
      */
-    public function toAMQPMessage()
+    public function getProperty($name, $default = '')
     {
-        return new AMQPMessage($this->getBody(), $this->getProperties());
+        return isset($this->properties[$name]) ? $this->properties[$name] : $default;
+    }
+
+    /**
+     * @param int $timestamp
+     *
+     * @return $this
+     */
+    public function setTimestamp($timestamp)
+    {
+        return $this->setProperty(static::PROPERTY_TIMESTAMP, $timestamp);
     }
 
     /**
@@ -102,26 +109,97 @@ class BasicMessage
     }
 
     /**
-     * @param string $name
-     * @param string $default
-     *
      * @return string
      */
-    public function getProperty($name, $default = '')
+    public function getType()
     {
-        return isset($this->properties[$name]) ? $this->properties[$name] : $default;
+        return $this->getProperty(static::PROPERTY_TYPE);
     }
 
     /**
-     * @param string $name
+     * @param string $type
      *
-     * @return bool
+     * @return $this
      */
-    public function hasProperty($name)
+    public function setType($type)
     {
-        $value = $this->getProperty($name, null);
+        return $this->setProperty(static::PROPERTY_TYPE, $type);
+    }
 
-        return !is_null($value);
+    /**
+     * @return string
+     */
+    public function getContentType()
+    {
+        return $this->getProperty(static::PROPERTY_CONTENT_TYPE);
+    }
+
+    /**
+     * @param string $contentType
+     *
+     * @return $this
+     */
+    public function setContentType($contentType)
+    {
+        return $this->setProperty(static::PROPERTY_CONTENT_TYPE, $contentType);
+    }
+
+    /**
+     * @param AMQPMessage $amqpMessage
+     *
+     * @return static
+     * @throws MessageException
+     */
+    public static function loadAMQPMessage(AMQPMessage $amqpMessage)
+    {
+        $message = new static($amqpMessage->body, $amqpMessage->get_properties());
+        $message->checkRequiredPropertiesPresence($amqpMessage);
+
+        return $message;
+    }
+
+    /**
+     * @param AMQPMessage $amqpMessage
+     *
+     * @throws MessageException
+     */
+    protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
+    {
+        foreach ($this->getRequiredProperties() as $requiredProperty)
+        {
+            if (!array_key_exists($requiredProperty, $amqpMessage->get_properties()))
+            {
+                throw MessageException::requiredPropertyMissing($requiredProperty);
+            }
+        }
+    }
+
+    /**
+     * @return array
+     */
+    public function getRequiredProperties()
+    {
+        return $this->requiredProperties;
+    }
+
+    /**
+     * @param array $requiredProperties
+     *
+     * @return $this
+     */
+    public function setRequiredProperties($requiredProperties)
+    {
+        $this->requiredProperties = $requiredProperties;
+
+        return $this;
+    }
+
+    /**
+     * @return AMQPMessage
+     */
+    public function toAMQPMessage()
+    {
+        return new AMQPMessage($this->getBody(), $this->getProperties());
     }
 
     /**
@@ -165,21 +243,15 @@ class BasicMessage
     }
 
     /**
-     * @return string
-     */
-    public function getContentType()
-    {
-        return $this->getProperty(static::PROPERTY_CONTENT_TYPE);
-    }
-
-    /**
-     * @param string $contentType
+     * @param string $name
      *
-     * @return $this
+     * @return bool
      */
-    public function setContentType($contentType)
+    public function hasProperty($name)
     {
-        return $this->setProperty(static::PROPERTY_CONTENT_TYPE, $contentType);
+        $value = $this->getProperty($name, null);
+
+        return !is_null($value);
     }
 
     /**
@@ -255,42 +327,6 @@ class BasicMessage
     }
 
     /**
-     * @return int
-     */
-    public function getTimestamp()
-    {
-        return $this->getProperty(static::PROPERTY_TIMESTAMP);
-    }
-
-    /**
-     * @param int $timestamp
-     *
-     * @return $this
-     */
-    public function setTimestamp($timestamp)
-    {
-        return $this->setProperty(static::PROPERTY_TIMESTAMP, $timestamp);
-    }
-
-    /**
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->getProperty(static::PROPERTY_TYPE);
-    }
-
-    /**
-     * @param string $type
-     *
-     * @return $this
-     */
-    public function setType($type)
-    {
-        return $this->setProperty(static::PROPERTY_TYPE, $type);
-    }
-
-    /**
      * @return string
      */
     public function getUserId()
@@ -342,42 +378,6 @@ class BasicMessage
     {
         $contentType = is_null($contentType) ? $this->getContentType() : $contentType;
         $this->setBody($data->serialize(SerializerFactory::bySerializedContentType($contentType)));
-    }
-
-    /**
-     * @return array
-     */
-    public function getRequiredProperties()
-    {
-        return $this->requiredProperties;
-    }
-
-    /**
-     * @param array $requiredProperties
-     *
-     * @return $this
-     */
-    public function setRequiredProperties($requiredProperties)
-    {
-        $this->requiredProperties = $requiredProperties;
-
-        return $this;
-    }
-
-    /**
-     * @param AMQPMessage $amqpMessage
-     *
-     * @throws MessageException
-     */
-    protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
-    {
-        foreach ($this->getRequiredProperties() as $requiredProperty)
-        {
-            if (!array_key_exists($requiredProperty, $amqpMessage->get_properties()))
-            {
-                throw MessageException::requiredPropertyMissing($requiredProperty);
-            }
-        }
     }
 
 }

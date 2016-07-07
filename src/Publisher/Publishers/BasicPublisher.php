@@ -116,16 +116,6 @@ class BasicPublisher implements PublisherInterface
     }
 
     /**
-     * @param string $data
-     *
-     * @return AMQPMessage
-     */
-    protected function composeAMQPMessage($data)
-    {
-        return new AMQPMessage($data);
-    }
-
-    /**
      * @throws PublisherException
      */
     protected function checkDestination()
@@ -134,6 +124,16 @@ class BasicPublisher implements PublisherInterface
         {
             throw PublisherException::noDestinationSet();
         }
+    }
+
+    /**
+     * @param string $data
+     *
+     * @return AMQPMessage
+     */
+    protected function composeAMQPMessage($data)
+    {
+        return new AMQPMessage($data);
     }
 
     /**

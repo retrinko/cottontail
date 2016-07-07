@@ -56,7 +56,7 @@ class Client
      * Timeout in seconds
      * @var int
      */
-    protected $timeOut = 10;
+    protected $timeOut = 15;
 
     /**
      * @param string $server
@@ -84,26 +84,6 @@ class Client
     }
 
     /**
-     * @return int seconds
-     */
-    public function getTimeOut()
-    {
-        return $this->timeOut;
-    }
-
-    /**
-     * @param int $timeOut seconds
-     *
-     * @return Client
-     */
-    public function setTimeOut($timeOut)
-    {
-        $this->timeOut = $timeOut;
-
-        return $this;
-    }
-
-    /**
      * @param string $queue
      *
      * @return $this
@@ -113,51 +93,6 @@ class Client
         $this->forcedResponsesQueue = $queue;
 
         return $this;
-    }
-
-    /**
-     * Trick for calling protected method onResponse as callback.
-     * @return \Closure
-     */
-    protected function getCallback()
-    {
-        $client = $this;
-        $callback = function ($amqpMessage) use ($client)
-        {
-            $client->onResponse($amqpMessage);
-        };
-
-        return $callback;
-    }
-
-    /**
-     * @param AMQPMessage $response
-     *
-     * @throws MessageException
-     */
-    protected function onResponse(AMQPMessage $response)
-    {
-        $this->logger->notice('Message received!', ['body' => $response->body,
-                                                    'properties' => $response->get_properties()]);
-        try
-        {
-            $this->rpcResponse = RpcResponseMessage::loadAMQPMessage($response);
-            if ($this->correlarionId != $this->rpcResponse->getCorrelationId())
-            {
-                throw MessageException::wrongCorrelationId($this->rpcResponse->getCorrelationId(),
-                                                           $this->correlarionId);
-            }
-            // Send ack
-            $this->connector->basicAck($response);
-        }
-        catch (\Exception $e)
-        {
-            $responsePayload = RpcResponsePayload::create()->addError($e->getMessage());
-            $this->rpcResponse = new RpcResponseMessage();
-            $this->rpcResponse->setPayload($responsePayload);
-            $this->connector->basicReject($response, false);
-        }
-
     }
 
     /**
@@ -222,6 +157,26 @@ class Client
     }
 
     /**
+     * @return int seconds
+     */
+    public function getTimeOut()
+    {
+        return $this->timeOut;
+    }
+
+    /**
+     * @param int $timeOut seconds
+     *
+     * @return Client
+     */
+    public function setTimeOut($timeOut)
+    {
+        $this->timeOut = $timeOut;
+
+        return $this;
+    }
+
+    /**
      * @param RpcRequestMessage $request
      * @param string $routingKey
      */
@@ -240,5 +195,50 @@ class Client
         {
             $this->connector->wait($this->getTimeOut());
         }
+    }
+
+    /**
+     * Trick for calling protected method onResponse as callback.
+     * @return \Closure
+     */
+    protected function getCallback()
+    {
+        $client = $this;
+        $callback = function ($amqpMessage) use ($client)
+        {
+            $client->onResponse($amqpMessage);
+        };
+
+        return $callback;
+    }
+
+    /**
+     * @param AMQPMessage $response
+     *
+     * @throws MessageException
+     */
+    protected function onResponse(AMQPMessage $response)
+    {
+        $this->logger->notice('Message received!', ['body' => $response->body,
+                                                    'properties' => $response->get_properties()]);
+        try
+        {
+            $this->rpcResponse = RpcResponseMessage::loadAMQPMessage($response);
+            if ($this->correlarionId != $this->rpcResponse->getCorrelationId())
+            {
+                throw MessageException::wrongCorrelationId($this->rpcResponse->getCorrelationId(),
+                                                           $this->correlarionId);
+            }
+            // Send ack
+            $this->connector->basicAck($response);
+        }
+        catch (\Exception $e)
+        {
+            $responsePayload = RpcResponsePayload::create()->addError($e->getMessage());
+            $this->rpcResponse = new RpcResponseMessage();
+            $this->rpcResponse->setPayload($responsePayload);
+            $this->connector->basicReject($response, false);
+        }
+
     }
 }

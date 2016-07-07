@@ -39,26 +39,6 @@ class RpcResponsePayload extends DefaultPayload
     }
 
     /**
-     * @return int
-     */
-    public function getStatus()
-    {
-        return $this->data[self::KEY_STATUS];
-    }
-
-    /**
-     * @param int $statusCode
-     *
-     * @return $this
-     */
-    public function setStatus($statusCode = self::STATUS_CODE_SUCCESS)
-    {
-        $this->data[self::KEY_STATUS] = $statusCode;
-
-        return $this;
-    }
-
-    /**
      * @return bool
      */
     public function isOK()
@@ -67,11 +47,11 @@ class RpcResponsePayload extends DefaultPayload
     }
 
     /**
-     * @return array
+     * @return int
      */
-    public function getErrors()
+    public function getStatus()
     {
-        return $this->data[self::KEY_ERRORS];
+        return $this->data[self::KEY_STATUS];
     }
 
     /**
@@ -86,6 +66,18 @@ class RpcResponsePayload extends DefaultPayload
         {
             $this->setStatus(self::STATUS_CODE_ERROR);
         }
+
+        return $this;
+    }
+
+    /**
+     * @param int $statusCode
+     *
+     * @return $this
+     */
+    public function setStatus($statusCode = self::STATUS_CODE_SUCCESS)
+    {
+        $this->data[self::KEY_STATUS] = $statusCode;
 
         return $this;
     }
@@ -109,6 +101,14 @@ class RpcResponsePayload extends DefaultPayload
     public function hasErrors()
     {
         return count($this->getErrors());
+    }
+
+    /**
+     * @return array
+     */
+    public function getErrors()
+    {
+        return $this->data[self::KEY_ERRORS];
     }
 
     /**
