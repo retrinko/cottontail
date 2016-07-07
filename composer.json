@@ -1,0 +1,34 @@
+{
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "name": "retrinko/cottontail",
+  "description": "RabbitMQ basic communication patterns",
+  "license": "MIT",
+  "keywords": [
+    "rabitmq",
+    "patterns"
+  ],
+  "authors": [
+    {
+      "name": "Miguel Ángel Graña",
+      "email": "miguel.mailbox@gmail.com"
+    }
+  ],
+  "require": {
+    "php": ">=5.4.0",
+    "psr/log": "^1.0",
+    "php-amqplib/php-amqplib": "2.6.*",
+    "retrinko/serializer": "^0.1"
+  },
+  "require-dev": {
+    "monolog/monolog": "^1.14",
+    "phpunit/phpunit": "^4.0"
+  },
+  "repositories": [],
+  "autoload": {
+    "psr-4": {
+      "Retrinko\\CottonTail\\": "src",
+      "Retrinko\\CottonTail\\Tests\\Unit\\": "tests/unit"
+    }
+  }
+}
