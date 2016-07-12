@@ -3,7 +3,9 @@
 namespace Retrinko\CottonTail\RabbitMQ;
 
 use PhpAmqpLib\Channel\AMQPChannel;
-use PhpAmqpLib\Connection\AMQPStreamConnection as AMQPConnection;
+use PhpAmqpLib\Connection\AbstractConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Connection\AMQPSSLConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -33,13 +35,17 @@ class Connector
      */
     protected $vhost;
     /**
-     * @var AMQPConnection
+     * @var AMQPStreamConnection|AMQPSSLConnection
      */
     protected $connection;
     /**
      * @var AMQPChannel
      */
     protected $channel;
+    /**
+     * @var array
+     */
+    protected $sslOptions;
 
     /**
      * @param string $server
@@ -47,8 +53,9 @@ class Connector
      * @param string $user
      * @param string $pass
      * @param string $vhost
+     * @param array $sslOptions
      */
-    public function __construct($server, $port, $user, $pass, $vhost = '/')
+    public function __construct($server, $port, $user, $pass, $vhost = '/', $sslOptions = [])
     {
         $this->logger = new NullLogger();
         $this->server = $server;
@@ -56,6 +63,7 @@ class Connector
         $this->user = $user;
         $this->pass = $pass;
         $this->vhost = $vhost;
+        $this->sslOptions = $sslOptions;
     }
 
     /**
@@ -73,7 +81,7 @@ class Connector
     {
         $this->connection = null;
         $this->closeChannel();
-        if ($this->connection instanceof AMQPConnection)
+        if ($this->connection instanceof AbstractConnection)
         {
             $this->connection->close();
             $this->logger->info('Connection clossed!', ['server'=>$this->server,
@@ -103,12 +111,29 @@ class Connector
      */
     public function connect($forceReconnection = false)
     {
-        $env = ['server'=>$this->server, 'port'=>$this->port, 'vhost'=>$this->vhost];
-        if (true == $forceReconnection || false == ($this->connection instanceof AMQPConnection))
+        $useSslConnection = !empty($this->sslOptions);
+        $env = ['server'=>$this->server, 'port'=>$this->port, 'vhost'=>$this->vhost, 
+                'ssl'=>$useSslConnection];
+        if (true == $forceReconnection || false == ($this->connection instanceof AMQPStreamConnection))
         {
             $this->logger->debug('Stablishing connection...', $env);
-            $this->connection = new AMQPConnection($this->server, $this->port, $this->user,
-                                                   $this->pass, $this->vhost);
+            if ($useSslConnection)
+            {
+                $this->connection = new AMQPSSLConnection($this->server,
+                                                          $this->port,
+                                                          $this->user,
+                                                          $this->pass,
+                                                          $this->vhost,
+                                                          $this->sslOptions);
+            }
+            else
+            {
+                $this->connection = new AMQPStreamConnection($this->server,
+                                                             $this->port,
+                                                             $this->user,
+                                                             $this->pass,
+                                                             $this->vhost);
+            }
             $this->logger->info('Connection stablished!', $env);
         }
         elseif (false == $this->connection->isConnected())
