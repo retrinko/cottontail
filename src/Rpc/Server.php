@@ -55,12 +55,14 @@ class Server
      * @param string $pass
      * @param string $requestsQueue
      * @param string $vhost
+     * @param array $sslOptions
      */
-    public function __construct($server, $port, $user, $pass, $requestsQueue, $vhost = '/')
+    public function __construct($server, $port, $user, $pass, $requestsQueue, $vhost = '/',
+                                $sslOptions = [])
     {
         $this->logger = new NullLogger();
         $this->serializer = new JsonSerializer();
-        $this->connector = new Connector($server, $port, $user, $pass, $vhost);
+        $this->connector = new Connector($server, $port, $user, $pass, $vhost, $sslOptions);
         $this->requestsQueue = $requestsQueue;
     }
 

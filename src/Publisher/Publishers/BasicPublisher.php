@@ -50,12 +50,13 @@ class BasicPublisher implements PublisherInterface
      * @param string $user
      * @param string $pass
      * @param string $vhost
+     * @param array $sslOptions
      */
-    public function __construct($server, $port, $user, $pass, $vhost = '/')
+    public function __construct($server, $port, $user, $pass, $vhost = '/', $sslOptions = [])
     {
         $this->logger = new NullLogger();
         $this->serializer = new JsonSerializer();
-        $this->connector = new Connector($server, $port, $user, $pass, $vhost);
+        $this->connector = new Connector($server, $port, $user, $pass, $vhost, $sslOptions);
     }
 
     /**
