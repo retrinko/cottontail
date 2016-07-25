@@ -79,7 +79,6 @@ class Connector
      */
     public function closeConnection()
     {
-        $this->connection = null;
         $this->closeChannel();
         if ($this->connection instanceof AbstractConnection)
         {
@@ -88,6 +87,7 @@ class Connector
                                                         'port'=>$this->port,
                                                         'vhost'=>$this->vhost]);
         }
+        $this->connection = null;
     }
 
     /**
