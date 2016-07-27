@@ -21,8 +21,6 @@ interface MessageInterface
     const TYPE_RPC_REQUEST  = 'rpc-request';
     const TYPE_RPC_RESPONSE = 'rpc-response';
     const TYPE_BASIC        = 'basic';
-    const TYPE_LOG          = 'log';
-    const TYPE_EVENT        = 'event';
 
     const CONTENT_TYPE_JSON       = 'application/json';
     const CONTENT_TYPE_PHP        = 'application/php/serialize/base64_encode';
