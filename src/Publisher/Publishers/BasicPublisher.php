@@ -9,6 +9,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Exceptions\PublisherException;
+use Retrinko\CottonTail\Message\Messages\BasicMessage;
 use Retrinko\CottonTail\Publisher\PublisherInterface;
 use Retrinko\CottonTail\RabbitMQ\Connector;
 use Retrinko\Serializer\Serializers\JsonSerializer;
@@ -94,7 +95,7 @@ class BasicPublisher implements PublisherInterface
     }
 
     /**
-     * @param string $data
+     * @param mixed $data
      * @param bool $closeConnectionAfterPublish
      *
      * @throws PublisherException
@@ -128,13 +129,16 @@ class BasicPublisher implements PublisherInterface
     }
 
     /**
-     * @param string $data
+     * @param mixed $data
      *
      * @return AMQPMessage
      */
     protected function composeAMQPMessage($data)
     {
-        return new AMQPMessage($data);
+        $message = new BasicMessage($this->getSerializer()->serialize($data));
+        $message->setContentType($this->getSerializer()->getSerializedContentType());
+
+        return $message->toAMQPMessage();
     }
 
     /**
