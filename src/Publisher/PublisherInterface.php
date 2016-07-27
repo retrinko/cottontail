@@ -9,7 +9,7 @@ use Retrinko\Serializer\Interfaces\SerializerInterface;
 interface PublisherInterface
 {
     /**
-     * @param string $data
+     * @param mixed $data
      *
      * @return void
      */
