@@ -5,28 +5,12 @@ namespace Retrinko\CottonTail\Message\Messages;
 
 use PhpAmqpLib\Message\AMQPMessage;
 use Retrinko\CottonTail\Exceptions\MessageException;
+use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\PayloadInterface;
 use Retrinko\Serializer\SerializerFactory;
 
-class BasicMessage
+class BasicMessage implements MessageInterface
 {
-    const PROPERTY_CONTENT_TYPE   = 'content_type';
-    const PROPERTY_CORRELATION_ID = 'correlation_id';
-    const PROPERTY_REPLY_TO       = 'reply_to';
-    const PROPERTY_EXPIRATION     = 'expiration';
-    const PROPERTY_TIMESTAMP      = 'timestamp';
-    const PROPERTY_USER_ID        = 'user_id';
-    const PROPERTY_APP_ID         = 'app_id';
-    const PROPERTY_TYPE           = 'type';
-
-    const TYPE_RPC_REQUEST  = 'rpc-request';
-    const TYPE_RPC_RESPONSE = 'rpc-response';
-    const TYPE_PLAIN_TEXT   = 'text';
-
-    const CONTENT_TYPE_JSON       = 'application/json';
-    const CONTENT_TYPE_PHP        = 'application/php.serialize.base64_encode';
-    const CONTENT_TYPE_PLAIN_TEXT = 'text/plain';
-
     /**
      * @var string
      */
@@ -58,11 +42,11 @@ class BasicMessage
         }
         if ('' == $this->getType())
         {
-            $this->setType(static::TYPE_PLAIN_TEXT);
+            $this->setType(MessageInterface::TYPE_BASIC);
         }
         if ('' == $this->getContentType())
         {
-            $this->setContentType(static::CONTENT_TYPE_PLAIN_TEXT);
+            $this->setContentType(MessageInterface::CONTENT_TYPE_PLAIN_TEXT);
         }
     }
 
@@ -71,7 +55,7 @@ class BasicMessage
      */
     public function getTimestamp()
     {
-        return $this->getProperty(static::PROPERTY_TIMESTAMP);
+        return $this->getProperty(MessageInterface::PROPERTY_TIMESTAMP);
     }
 
     /**
@@ -92,7 +76,7 @@ class BasicMessage
      */
     public function setTimestamp($timestamp)
     {
-        return $this->setProperty(static::PROPERTY_TIMESTAMP, $timestamp);
+        return $this->setProperty(MessageInterface::PROPERTY_TIMESTAMP, $timestamp);
     }
 
     /**
@@ -113,7 +97,7 @@ class BasicMessage
      */
     public function getType()
     {
-        return $this->getProperty(static::PROPERTY_TYPE);
+        return $this->getProperty(MessageInterface::PROPERTY_TYPE);
     }
 
     /**
@@ -123,7 +107,7 @@ class BasicMessage
      */
     public function setType($type)
     {
-        return $this->setProperty(static::PROPERTY_TYPE, $type);
+        return $this->setProperty(MessageInterface::PROPERTY_TYPE, $type);
     }
 
     /**
@@ -131,7 +115,7 @@ class BasicMessage
      */
     public function getContentType()
     {
-        return $this->getProperty(static::PROPERTY_CONTENT_TYPE);
+        return $this->getProperty(MessageInterface::PROPERTY_CONTENT_TYPE);
     }
 
     /**
@@ -141,7 +125,7 @@ class BasicMessage
      */
     public function setContentType($contentType)
     {
-        return $this->setProperty(static::PROPERTY_CONTENT_TYPE, $contentType);
+        return $this->setProperty(MessageInterface::PROPERTY_CONTENT_TYPE, $contentType);
     }
 
     /**
@@ -259,7 +243,7 @@ class BasicMessage
      */
     public function getAppId()
     {
-        return $this->getProperty(static::PROPERTY_APP_ID);
+        return $this->getProperty(MessageInterface::PROPERTY_APP_ID);
     }
 
     /**
@@ -269,7 +253,7 @@ class BasicMessage
      */
     public function setAppId($appId)
     {
-        return $this->setProperty(static::PROPERTY_APP_ID, $appId);
+        return $this->setProperty(MessageInterface::PROPERTY_APP_ID, $appId);
     }
 
     /**
@@ -277,7 +261,7 @@ class BasicMessage
      */
     public function getCorrelationId()
     {
-        return $this->getProperty(static::PROPERTY_CORRELATION_ID);
+        return $this->getProperty(MessageInterface::PROPERTY_CORRELATION_ID);
     }
 
     /**
@@ -287,7 +271,7 @@ class BasicMessage
      */
     public function setCorrelationId($correlationId)
     {
-        return $this->setProperty(static::PROPERTY_CORRELATION_ID, $correlationId);
+        return $this->setProperty(MessageInterface::PROPERTY_CORRELATION_ID, $correlationId);
     }
 
     /**
@@ -295,7 +279,7 @@ class BasicMessage
      */
     public function getExpiration()
     {
-        return $this->getProperty(static::PROPERTY_EXPIRATION);
+        return $this->getProperty(MessageInterface::PROPERTY_EXPIRATION);
     }
 
     /**
@@ -305,7 +289,7 @@ class BasicMessage
      */
     public function setExpiration($expiration)
     {
-        return $this->setProperty(static::PROPERTY_EXPIRATION, $expiration);
+        return $this->setProperty(MessageInterface::PROPERTY_EXPIRATION, $expiration);
     }
 
     /**
@@ -313,7 +297,7 @@ class BasicMessage
      */
     public function getReplyTo()
     {
-        return $this->getProperty(static::PROPERTY_REPLY_TO);
+        return $this->getProperty(MessageInterface::PROPERTY_REPLY_TO);
     }
 
     /**
@@ -323,7 +307,7 @@ class BasicMessage
      */
     public function setReplyTo($replyTo)
     {
-        return $this->setProperty(static::PROPERTY_REPLY_TO, $replyTo);
+        return $this->setProperty(MessageInterface::PROPERTY_REPLY_TO, $replyTo);
     }
 
     /**
@@ -331,7 +315,7 @@ class BasicMessage
      */
     public function getUserId()
     {
-        return $this->getProperty(static::PROPERTY_USER_ID);
+        return $this->getProperty(MessageInterface::PROPERTY_USER_ID);
     }
 
     /**
@@ -341,7 +325,7 @@ class BasicMessage
      */
     public function setUserId($userId)
     {
-        return $this->setProperty(static::PROPERTY_USER_ID, $userId);
+        return $this->setProperty(MessageInterface::PROPERTY_USER_ID, $userId);
     }
 
     /**
@@ -350,7 +334,7 @@ class BasicMessage
      *
      * @return $this
      */
-    public function loadString($string, $contentType = self::CONTENT_TYPE_PLAIN_TEXT)
+    public function loadString($string, $contentType = MessageInterface::CONTENT_TYPE_PLAIN_TEXT)
     {
         $this->setBody($string);
         $this->setContentType($contentType);
