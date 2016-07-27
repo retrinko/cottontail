@@ -21,7 +21,7 @@ class MessageFactory
     {
         try
         {
-            $msgType = $amqpMessage->get(BasicMessage::PROPERTY_TYPE);
+            $msgType = $amqpMessage->get(MessageInterface::PROPERTY_TYPE);
         }
         catch (\Exception $e)
         {
@@ -31,13 +31,13 @@ class MessageFactory
 
         switch ($msgType)
         {
-            case BasicMessage::TYPE_RPC_RESPONSE:
+            case MessageInterface::TYPE_RPC_RESPONSE:
                 $message = RpcResponseMessage::loadAMQPMessage($amqpMessage);
                 break;
-            case BasicMessage::TYPE_RPC_REQUEST:
+            case MessageInterface::TYPE_RPC_REQUEST:
                 $message = RpcRequestMessage::loadAMQPMessage($amqpMessage);
                 break;
-            case BasicMessage::TYPE_PLAIN_TEXT:
+            case MessageInterface::TYPE_BASIC:
             default:
                 $message = BasicMessage::loadAMQPMessage($amqpMessage);
                 break;
