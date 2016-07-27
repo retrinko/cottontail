@@ -129,11 +129,15 @@ class Server
         {
             $this->logger->notice('Message received!', ['body' => $request->body,
                                                         'properties' => $request->get_properties()]);
-            // Load request message
-            $this->currentRequest = RpcRequestMessage::loadAMQPMessage($request);
+
+            // Reset possible previous $this->currentRequest;
+            $this->currentRequest = null;
 
             // Create empty response
             $this->currentResponse = new RpcResponseMessage();
+
+            // Load request message
+            $this->currentRequest = RpcRequestMessage::loadAMQPMessage($request);
             $this->currentResponse->setCorrelationId($this->currentRequest->getCorrelationId());
             $this->currentResponse->setContentType($this->serializer->getSerializedContentType());
 
@@ -244,12 +248,18 @@ class Server
      */
     protected function sendResponse(RpcResponseMessage $response)
     {
-        $correlationId = $this->currentRequest->getCorrelationId();
-        $response->setCorrelationId($correlationId);
+        if ($this->currentRequest instanceof RpcRequestMessage)
+        {
+            $correlationId = $this->currentRequest->getCorrelationId();
+            $response->setCorrelationId($correlationId);
 
-        // Publish reponse message
-        $this->connector->basicPublish($response->toAMQPMessage(), '',
-                                       $this->currentRequest->getReplyTo());
-
+            // Publish reponse message
+            $this->connector->basicPublish($response->toAMQPMessage(), '',
+                                           $this->currentRequest->getReplyTo());
+        }
+        else
+        {
+            $this->logger->warning('Imposible to send response! Invalid request.');
+        }
     }
 }
