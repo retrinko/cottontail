@@ -66,7 +66,7 @@ abstract class AbstractSubscriber
      *
      * @return $this
      */
-    public function requeueMessagesOnCalbackFails($requeue = false)
+    public function requeueMessagesOnCallbackFails($requeue = false)
     {
         $this->requeueMessagesOnCallbackFails = $requeue;
 
