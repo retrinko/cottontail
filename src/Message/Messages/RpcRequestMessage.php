@@ -6,6 +6,7 @@ namespace Retrinko\CottonTail\Message\Messages;
 
 use PhpAmqpLib\Message\AMQPMessage;
 use Retrinko\CottonTail\Exceptions\MessageException;
+use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Payloads\RpcRequestPayload;
 
 class RpcRequestMessage extends BasicMessage
@@ -13,9 +14,9 @@ class RpcRequestMessage extends BasicMessage
     /**
      * @var array
      */
-    protected $requiredProperties = [self::PROPERTY_TYPE,
-                                     self::PROPERTY_CORRELATION_ID,
-                                     self::PROPERTY_CONTENT_TYPE];
+    protected $requiredProperties = [MessageInterface::PROPERTY_TYPE,
+                                     MessageInterface::PROPERTY_CORRELATION_ID,
+                                     MessageInterface::PROPERTY_CONTENT_TYPE];
 
     /**
      * @param string $body
@@ -24,7 +25,7 @@ class RpcRequestMessage extends BasicMessage
     public function __construct($body = '', $properties = [])
     {
         parent::__construct($body, $properties);
-        $this->setType(static::TYPE_RPC_REQUEST);
+        $this->setType(MessageInterface::TYPE_RPC_REQUEST);
     }
 
     /**
@@ -57,10 +58,10 @@ class RpcRequestMessage extends BasicMessage
     protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
     {
         parent::checkRequiredPropertiesPresence($amqpMessage);
-        if (static::TYPE_RPC_REQUEST != $amqpMessage->get(static::PROPERTY_TYPE))
+        if (MessageInterface::TYPE_RPC_REQUEST != $amqpMessage->get(MessageInterface::PROPERTY_TYPE))
         {
             throw MessageException::wrongMessageType($this->getType(),
-                                                     static::TYPE_RPC_REQUEST);
+                                                     MessageInterface::TYPE_RPC_REQUEST);
         }
     }
 
