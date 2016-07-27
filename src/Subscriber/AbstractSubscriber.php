@@ -8,6 +8,8 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Retrinko\CottonTail\Message\MessageFactory;
+use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\RabbitMQ\Connector;
 use Retrinko\Serializer\Serializers\JsonSerializer;
 use Retrinko\Serializer\Traits\SerializerAwareTrait;
@@ -26,7 +28,7 @@ abstract class AbstractSubscriber
      */
     protected $queue;
     /**
-     * @var AMQPMessage
+     * @var MessageInterface
      */
     protected $currentReceivedMessage;
     /**
@@ -37,6 +39,10 @@ abstract class AbstractSubscriber
      * @var int
      */
     protected $numberOfReceivedMessages = 0;
+    /**
+     * @var bool
+     */
+    protected $requeueMessagesOnCallbackFails = false;
 
     /**
      * @param string $server
@@ -56,8 +62,20 @@ abstract class AbstractSubscriber
     }
 
     /**
+     * @param bool $requeue
+     *
+     * @return $this
+     */
+    public function requeueMessagesOnCalbackFails($requeue = false)
+    {
+        $this->requeueMessagesOnCallbackFails = $requeue;
+
+        return $this;
+    }
+
+    /**
      * Method for processing $this->currentReceivedMessage
-     * @return void
+     * @return bool
      */
     abstract protected function callback();
 
@@ -83,7 +101,7 @@ abstract class AbstractSubscriber
     }
 
     /**
-     * Trick for calling protected method onRequest as callback.
+     * Trick for calling protected method onMessage as callback.
      * @return \Closure
      */
     protected function getCallback()
@@ -146,24 +164,37 @@ abstract class AbstractSubscriber
      */
     final protected function onMessage(AMQPMessage $amqpMessage)
     {
-        $this->numberOfReceivedMessages++;
-        $this->currentReceivedMessage = $amqpMessage;
+        try
+        {
+            $this->numberOfReceivedMessages++;
+            $this->currentReceivedMessage = MessageFactory::byAMQPMessage($amqpMessage);
 
-        // Process message
-        $this->logger->debug(sprintf('Processing message %s of %s...',
-                                     $this->numberOfReceivedMessages,
-                                     (0 == $this->numberOfMessagesToConsume)
-                                         ? 'unlimited'
-                                         : $this->numberOfMessagesToConsume));
-        $this->callback();
+            $this->logger->debug(sprintf('Processing message %s of %s...',
+                                         $this->numberOfReceivedMessages,
+                                         (0 == $this->numberOfMessagesToConsume)
+                                             ? 'unlimited'
+                                             : $this->numberOfMessagesToConsume));
+            // Process message
+            $this->callback();
+            // Send ACK
+            $this->connector->basicAck($amqpMessage);
 
-        // Send ACK
-        $this->connector->basicAck($amqpMessage);
+        }
+        catch (\Exception $e)
+        {
+            $this->logger->error('Exception processing message!',
+                                 ['exception' => [
+                                     'code' => $e->getCode(),
+                                     'message' => $e->getMessage(),
+                                     'file' => $e->getFile(),
+                                     'line' => $e->getLine()]]);
+            // Reject and requeue message if needed
+            $this->connector->basicReject($amqpMessage, $this->requeueMessagesOnCallbackFails);
+        }
 
         // Cancel consumption when limit reached ($this->numberOfMessagesToConsume)
         if (0 < $this->numberOfMessagesToConsume
-            && $this->numberOfMessagesToConsume <= $this->numberOfReceivedMessages
-        )
+            && $this->numberOfMessagesToConsume <= $this->numberOfReceivedMessages)
         {
             $this->logger->info(sprintf('Consumption limit reached! (limit: %s)',
                                         $this->numberOfMessagesToConsume));
