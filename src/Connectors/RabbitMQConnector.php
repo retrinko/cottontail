@@ -1,6 +1,6 @@
 <?php
 
-namespace Retrinko\CottonTail\RabbitMQ;
+namespace Retrinko\CottonTail\Connectors;
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
@@ -10,7 +10,7 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 
-class Connector
+class RabbitMQConnector implements ConnectorInterface
 {
     use LoggerAwareTrait;
 
@@ -233,7 +233,7 @@ class Connector
     /**
      * @param AMQPMessage $message
      */
-    public function basicAck($message)
+    public function basicAck(AMQPMessage $message)
     {
         $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
         $this->logger->notice('ACK sent!', ['body' => $message->body,
@@ -244,7 +244,7 @@ class Connector
      * @param AMQPMessage $message
      * @param bool $requeueMessage
      */
-    public function basicReject($message, $requeueMessage = false)
+    public function basicReject(AMQPMessage $message, $requeueMessage = false)
     {
         $message->delivery_info['channel']
             ->basic_reject($message->delivery_info['delivery_tag'], $requeueMessage);
@@ -255,7 +255,7 @@ class Connector
     /**
      * @param AMQPMessage $message
      */
-    public function basicCancel($message)
+    public function basicCancel(AMQPMessage $message)
     {
         $this->channel->basic_cancel($message->delivery_info['consumer_tag']);
         $this->logger->info(sprintf('Message consumption stopped!'));
