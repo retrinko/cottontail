@@ -5,15 +5,15 @@ date_default_timezone_set('UTC');
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Retrinko\CottonTail\Connectors\RabbitMQConnector;
 use Retrinko\CottonTail\Rpc\Client;
-use Retrinko\Serializer\Serializers\PhpSerializer;
 
-$rabbitUserName = 'user';
+$rabbitUserName = 'userName';
 $rabbitUserPass = 'password';
-$rabbitServerHostNameOrIP = 'rabbit-server.test';
+$rabbitServerHostNameOrIP = 'your-server.com';
 $rabbitServerPort = '5672';
-$exchange = 'orders.router';
-$destination = 'server';
+$exchange = 'exchangeName';
+$destination = 'destination';
 $remoteProcedure = 'hello';
 $params = ['name' => 'World!!'];
 
@@ -22,11 +22,13 @@ $logger->pushHandler(new StreamHandler('php://stdout'));
 
 try
 {
-    $serializer = new PhpSerializer();
-    $client = new Client($rabbitServerHostNameOrIP, $rabbitServerPort, $rabbitUserName,
-                         $rabbitUserPass, $exchange);
+    $connector = new RabbitMQConnector($rabbitServerHostNameOrIP,
+                                       $rabbitServerPort,
+                                       $rabbitUserName,
+                                       $rabbitUserPass);
+    $client = new Client($connector, $exchange);
     $client->setLogger($logger);
-    $client->setSerializer($serializer);
+
     $response = $client->call($destination, $remoteProcedure, $params);
     var_dump($response);
 }

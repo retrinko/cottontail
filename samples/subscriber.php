@@ -5,14 +5,15 @@ date_default_timezone_set('UTC');
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Retrinko\CottonTail\Connectors\RabbitMQConnector;
 use Retrinko\CottonTail\Subscriber\AbstractSubscriber;
 
-$rabbitUserName = 'user';
+$rabbitUserName = 'userName';
 $rabbitUserPass = 'password';
-$rabbitServerHostNameOrIP = 'rabbit-server.test';
+$rabbitServerHostNameOrIP = 'your-server.com';
 $rabbitServerPort = '5672';
-$queue = 'test-01';
-$vhost = '/my-vhost';
+$queue = 'queueName';
+$vhost = '/';
 
 $logger = new Logger('SUBSCRIBER');
 $logger->pushHandler(new StreamHandler('php://stdout'));
@@ -21,21 +22,28 @@ class BasicSusbscriber extends AbstractSubscriber
 {
     /**
      * Method for processing $this->currentReceivedMessage
-     * @return void
+     * @throws Exception
      */
     protected function callback()
     {
-        $this->logger->notice('PROCESSING!', [$this->currentReceivedMessage->body,
-                                              $this->currentReceivedMessage->get_properties()]);
+        $this->logger->notice('PROCESSING!', [get_class($this->currentReceivedMessage),
+                                              $this->currentReceivedMessage->getProperties()]);
+        $payload = $this->currentReceivedMessage->getPayload();
+        $this->logger->info($payload);
     }
 }
 
 
 try
 {
-    $subscriber = new BasicSusbscriber($rabbitServerHostNameOrIP, $rabbitServerPort, $rabbitUserName,
-                                       $rabbitUserPass, $queue, $vhost);
+
+    $connector = new RabbitMQConnector($rabbitServerHostNameOrIP,
+                                       $rabbitServerPort,
+                                       $rabbitUserName,
+                                       $rabbitUserPass);
+    $subscriber = new BasicSusbscriber($connector, $queue);
     $subscriber->setLogger($logger);
+    $subscriber->requeueMessagesOnCallbackFails(true);
     //$subscriber->setNumberOfMessagesToConsume(1);
     $subscriber->run();
 
