@@ -6,12 +6,12 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\Payloads\RpcRequestPayload;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
-use Retrinko\CottonTail\RabbitMQ\Connector as Connector;
 use Retrinko\Serializer\Serializers\JsonSerializer;
 use Retrinko\Serializer\Traits\SerializerAwareTrait;
 
@@ -25,7 +25,7 @@ class Client
     use SerializerAwareTrait;
 
     /**
-     * @var Connector
+     * @var ConnectorInterface
      */
     protected $connector;
     /**
@@ -59,19 +59,14 @@ class Client
     protected $timeOut = 15;
 
     /**
-     * @param string $server
-     * @param int $port
-     * @param string $user
-     * @param string $pass
+     * @param ConnectorInterface $connector
      * @param string $exchange
-     * @param string $vhost
-     * @param array $sslOptions
      */
-    public function __construct($server, $port, $user, $pass, $exchange, $vhost = '/', $sslOptions = [])
+    public function __construct(ConnectorInterface $connector, $exchange)
     {
         $this->logger = new NullLogger();
         $this->serializer = new JsonSerializer();
-        $this->connector = new Connector($server, $port, $user, $pass, $vhost, $sslOptions);
+        $this->connector = $connector;
         $this->exchange = $exchange;
     }
 

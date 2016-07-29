@@ -7,13 +7,13 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\ExecutionException;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Exceptions\RemoteProcedureException;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
-use Retrinko\CottonTail\RabbitMQ\Connector as Connector;
 use Retrinko\Serializer\Serializers\JsonSerializer;
 use Retrinko\Serializer\Traits\SerializerAwareTrait;
 
@@ -28,7 +28,7 @@ class Server
 
     static $proceduresClass;
     /**
-     * @var Connector
+     * @var ConnectorInterface
      */
     protected $connector;
     /**
@@ -49,20 +49,14 @@ class Server
     protected $currentRequest;
 
     /**
-     * @param string $server
-     * @param int $port
-     * @param string $user
-     * @param string $pass
-     * @param string $requestsQueue
-     * @param string $vhost
-     * @param array $sslOptions
+     * @param ConnectorInterface $connector
+     * @param $requestsQueue
      */
-    public function __construct($server, $port, $user, $pass, $requestsQueue, $vhost = '/',
-                                $sslOptions = [])
+    public function __construct(ConnectorInterface $connector, $requestsQueue)
     {
         $this->logger = new NullLogger();
         $this->serializer = new JsonSerializer();
-        $this->connector = new Connector($server, $port, $user, $pass, $vhost, $sslOptions);
+        $this->connector = $connector;
         $this->requestsQueue = $requestsQueue;
     }
 
