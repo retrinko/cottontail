@@ -5,27 +5,27 @@ date_default_timezone_set('UTC');
 
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
-use Retrinko\CottonTail\Connectors\RabbitMQConnector;
+use Retrinko\CottonTail\Connectors\PhpAmqpLibConnector;
 use Retrinko\CottonTail\Publisher\Publishers\BasicPublisher;
 
 
-$rabbitUserName = 'userName';
-$rabbitUserPass = 'password';
-$rabbitServerHostNameOrIP = 'your-server.com';
+$rabbitUserName = 'test';
+$rabbitUserPass = 'test';
+$rabbitServerHostNameOrIP = 'your-rabbitmq-server.com';
 $rabbitServerPort = '5672';
-$queue = 'queueName';
+$queue = 'test';
 //$vhost = '/my-vhost';
-$numberOfMessagesToPublish = 10;
+$numberOfMessagesToPublish = 3;
 
 $logger = new Logger('PUBLISHER');
 $logger->pushHandler(new StreamHandler('php://stdout'));
 
 try
 {
-    $connector = new RabbitMQConnector($rabbitServerHostNameOrIP,
-                                       $rabbitServerPort,
-                                       $rabbitUserName,
-                                       $rabbitUserPass);
+    $connector = new PhpAmqpLibConnector($rabbitServerHostNameOrIP,
+                                         $rabbitServerPort,
+                                         $rabbitUserName,
+                                         $rabbitUserPass);
     $publisher = new BasicPublisher($connector);
     $publisher->setDestination($queue);
     $publisher->setLogger($logger);
