@@ -4,7 +4,7 @@
 namespace Retrinko\CottonTail\Exceptions;
 
 
-class ExecutionException extends Exception
+class RpcExecutionException extends Exception
 {
     const EXCEPTION_CODE = 1000;
     
