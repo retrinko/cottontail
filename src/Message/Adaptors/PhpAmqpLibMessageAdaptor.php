@@ -10,7 +10,7 @@ use Retrinko\CottonTail\Message\Messages\BasicMessage;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
 
-class RabbitMQMessageAdaptor implements MessageAdaptorInterface
+class PhpAmqpLibMessageAdaptor implements MessageAdaptorInterface
 {
     /**
      * @param AMQPMessage $amqpMessage

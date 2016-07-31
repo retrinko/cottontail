@@ -11,15 +11,15 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Exceptions\ConnectorException;
-use Retrinko\CottonTail\Message\Adaptors\RabbitMQMessageAdaptor;
+use Retrinko\CottonTail\Message\Adaptors\PhpAmqpLibMessageAdaptor;
 use Retrinko\CottonTail\Message\MessageInterface;
 
-class RabbitMQConnector implements ConnectorInterface
+class PhpAmqpLibConnector implements ConnectorInterface
 {
     use LoggerAwareTrait;
 
     /**
-     * @var RabbitMQMessageAdaptor
+     * @var PhpAmqpLibMessageAdaptor
      */
     protected $messageAdaptor;
     /**
@@ -65,7 +65,7 @@ class RabbitMQConnector implements ConnectorInterface
      */
     public function __construct($server, $port, $user, $pass, $vhost = '/', $sslOptions = [])
     {
-        $this->messageAdaptor = new RabbitMQMessageAdaptor();
+        $this->messageAdaptor = new PhpAmqpLibMessageAdaptor();
         $this->logger = new NullLogger();
         $this->server = $server;
         $this->port = $port;
@@ -76,7 +76,7 @@ class RabbitMQConnector implements ConnectorInterface
     }
 
     /**
-     * @return RabbitMQMessageAdaptor
+     * @return PhpAmqpLibMessageAdaptor
      */
     public function getMesageAdaptor()
     {
