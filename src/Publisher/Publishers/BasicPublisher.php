@@ -3,13 +3,12 @@
 
 namespace Retrinko\CottonTail\Publisher\Publishers;
 
-
-use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\PublisherException;
+use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Messages\BasicMessage;
 use Retrinko\CottonTail\Publisher\PublisherInterface;
 use Retrinko\Serializer\Serializers\JsonSerializer;
@@ -100,10 +99,11 @@ class BasicPublisher implements PublisherInterface
         $this->checkDestination();
 
         // Compose message
-        $amqpMessage = $this->composeAMQPMessage($data);
+        $message = new BasicMessage($this->getSerializer()->serialize($data));
+        $message->setContentType($this->getSerializer()->getSerializedContentType());
 
         // Publish message
-        $this->publishAMQPMessage($amqpMessage);
+        $this->publishMessage($message);
 
         // Close connection if needed
         if (true == $closeConnectionAfterPublish)
@@ -124,33 +124,21 @@ class BasicPublisher implements PublisherInterface
     }
 
     /**
-     * @param mixed $data
-     *
-     * @return AMQPMessage
+     * @param MessageInterface $message
      */
-    protected function composeAMQPMessage($data)
-    {
-        $message = new BasicMessage($this->getSerializer()->serialize($data));
-        $message->setContentType($this->getSerializer()->getSerializedContentType());
-
-        return $message->toAMQPMessage();
-    }
-
-    /**
-     * @param AMQPMessage $amqpMessage
-     */
-    protected function publishAMQPMessage(AMQPMessage $amqpMessage)
+    protected function publishMessage(MessageInterface $message)
     {
         // Connect
         $this->connector->connect();
+
         // Publish message
         if (true == $this->publishOnQueue)
         {
-            $this->connector->basicPublish($amqpMessage, '', $this->publicationsQueue);
+            $this->connector->basicPublish($message, '', $this->publicationsQueue);
         }
         else
         {
-            $this->connector->basicPublish($amqpMessage, $this->publicationsExchange,
+            $this->connector->basicPublish($message, $this->publicationsExchange,
                                            $this->publicationsRoutingKey);
         }
     }

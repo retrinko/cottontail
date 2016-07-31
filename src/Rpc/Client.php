@@ -2,12 +2,12 @@
 
 namespace Retrinko\CottonTail\Rpc;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\MessageException;
+use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Payloads\RpcRequestPayload;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
@@ -111,13 +111,19 @@ class Client
         // Declare responses queue
         $this->declareResponsesQueue();
 
-        // Compose request message
-        $request = new RpcRequestMessage();
-        $request->setContentType($this->getSerializer()->getSerializedContentType());
-        $request->setCorrelationId($request->generateCorrelationId());
+        // Build request properties
+        $requestProperties = [];
+        $requestProperties[MessageInterface::PROPERTY_CONTENT_TYPE] = $this->getSerializer()->getSerializedContentType();
+
+        // Create an empty message
+        $request = new RpcRequestMessage('', $requestProperties);
+
+        // Set message payload
+        $request->setPayload(RpcRequestPayload::create($procedure, $params));
+
+        // Set other message properties
         $request->setExpiration(1000 * $this->getTimeOut());
         $request->setReplyTo($this->responsesQueue);
-        $request->setPayload(RpcRequestPayload::create($procedure, $params));
 
         // Send request
         $this->sendRequest($request, $routingKey);
@@ -181,7 +187,7 @@ class Client
         $this->correlarionId = $request->getCorrelationId();
 
         // Publish request message
-        $this->connector->basicPublish($request->toAMQPMessage(), $this->exchange, $routingKey);
+        $this->connector->basicPublish($request, $this->exchange, $routingKey);
 
         // Wait for response
         $this->logger->debug('Waiting for response...', ['body' => $request->getBody(),
@@ -200,26 +206,26 @@ class Client
     protected function getCallback()
     {
         $client = $this;
-        $callback = function ($amqpMessage) use ($client)
+        $callback = function ($receivedMessage) use ($client)
         {
-            $client->onResponse($amqpMessage);
+            $client->onResponse($this->connector->getMesageAdaptor()->toMessageInterface($receivedMessage));
         };
 
         return $callback;
     }
 
     /**
-     * @param AMQPMessage $response
+     * @param RpcResponseMessage $response
      *
      * @throws MessageException
      */
-    protected function onResponse(AMQPMessage $response)
+    protected function onResponse(RpcResponseMessage $response)
     {
-        $this->logger->notice('Message received!', ['body' => $response->body,
-                                                    'properties' => $response->get_properties()]);
+        $this->logger->notice('Message received!', ['body' => $response->getBody(),
+                                                    'properties' => $response->getProperties()]);
         try
         {
-            $this->rpcResponse = RpcResponseMessage::loadAMQPMessage($response);
+            $this->rpcResponse = $response;
             if ($this->correlarionId != $this->rpcResponse->getCorrelationId())
             {
                 throw MessageException::wrongCorrelationId($this->rpcResponse->getCorrelationId(),
@@ -231,7 +237,10 @@ class Client
         catch (\Exception $e)
         {
             $responsePayload = RpcResponsePayload::create()->addError($e->getMessage());
-            $this->rpcResponse = new RpcResponseMessage();
+            $reponseOptions = [];
+            $reponseOptions[MessageInterface::PROPERTY_CORRELATION_ID] = $this->correlarionId;
+            $reponseOptions[MessageInterface::PROPERTY_CONTENT_TYPE] = $this->getSerializer()->getSerializedContentType();
+            $this->rpcResponse = new RpcResponseMessage('', $reponseOptions);
             $this->rpcResponse->setPayload($responsePayload);
             $this->connector->basicReject($response, false);
         }
