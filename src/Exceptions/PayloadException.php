@@ -6,7 +6,7 @@ namespace Retrinko\CottonTail\Exceptions;
 
 class PayloadException extends Exception
 {
-    const EXCEPTION_CODE = 4000;
+    const EXCEPTION_CODE = 3000;
 
     const CODE_REQUIRED_FIELD_MISSING = 1;
     const CODE_BAD_RESPONSE_PAYLOAD   = 2;
