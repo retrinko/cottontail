@@ -7,7 +7,7 @@ use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\MessageException;
-use Retrinko\CottonTail\Message\MessageInterface;
+use Retrinko\CottonTail\Message\MessagesBuilder;
 use Retrinko\CottonTail\Message\Payloads\RpcRequestPayload;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
@@ -111,12 +111,8 @@ class Client
         // Declare responses queue
         $this->declareResponsesQueue();
 
-        // Build request properties
-        $requestProperties = [];
-        $requestProperties[MessageInterface::PROPERTY_CONTENT_TYPE] = $this->getSerializer()->getSerializedContentType();
-
-        // Create an empty message
-        $request = new RpcRequestMessage('', $requestProperties);
+        // Create an empty request message
+        $request = MessagesBuilder::emptyRpcRequest($this->getSerializer()->getSerializedContentType());
 
         // Set message payload
         $request->setPayload(RpcRequestPayload::create($procedure, $params));
@@ -236,11 +232,10 @@ class Client
         }
         catch (\Exception $e)
         {
+            // Create an error response an reject message
             $responsePayload = RpcResponsePayload::create()->addError($e->getMessage());
-            $reponseOptions = [];
-            $reponseOptions[MessageInterface::PROPERTY_CORRELATION_ID] = $this->correlarionId;
-            $reponseOptions[MessageInterface::PROPERTY_CONTENT_TYPE] = $this->getSerializer()->getSerializedContentType();
-            $this->rpcResponse = new RpcResponseMessage('', $reponseOptions);
+            $this->rpcResponse = MessagesBuilder::emptyRpcResponse($this->getSerializer()->getSerializedContentType(),
+                                                                   $this->correlarionId);
             $this->rpcResponse->setPayload($responsePayload);
             $this->connector->basicReject($response, false);
         }

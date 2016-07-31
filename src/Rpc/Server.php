@@ -10,7 +10,7 @@ use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\RpcExecutionException;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Exceptions\RemoteProcedureException;
-use Retrinko\CottonTail\Message\MessageInterface;
+use Retrinko\CottonTail\Message\MessagesBuilder;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
@@ -127,12 +127,9 @@ class Server
                                                         'properties' => $request->getProperties()]);
             $this->currentRequest = $request;
 
-            // Create empty response
-            $responseOptions = [];
-            $responseOptions[MessageInterface::PROPERTY_CORRELATION_ID] = $this->currentRequest->getCorrelationId();
-            $responseOptions[MessageInterface::PROPERTY_CONTENT_TYPE] = $this->serializer->getSerializedContentType();
-            $this->currentResponse = new RpcResponseMessage('', $responseOptions);
-
+            // Create an empty response
+            $this->currentResponse = MessagesBuilder::emptyRpcResponse($this->getSerializer()->getSerializedContentType(),
+                                                                       $this->currentRequest->getCorrelationId());
             //  Execute callback strategy
             $this->preCallback();
             $this->callback();
