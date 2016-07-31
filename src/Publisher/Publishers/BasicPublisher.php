@@ -8,10 +8,10 @@ use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
+use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\PublisherException;
 use Retrinko\CottonTail\Message\Messages\BasicMessage;
 use Retrinko\CottonTail\Publisher\PublisherInterface;
-use Retrinko\CottonTail\RabbitMQ\Connector;
 use Retrinko\Serializer\Serializers\JsonSerializer;
 use Retrinko\Serializer\Traits\SerializerAwareTrait;
 
@@ -21,7 +21,7 @@ class BasicPublisher implements PublisherInterface
     use SerializerAwareTrait;
 
     /**
-     * @var Connector
+     * @var ConnectorInterface
      */
     protected $connector;
     /**
@@ -46,18 +46,13 @@ class BasicPublisher implements PublisherInterface
     protected $publishOnExchange = false;
 
     /**
-     * @param string $server
-     * @param int $port
-     * @param string $user
-     * @param string $pass
-     * @param string $vhost
-     * @param array $sslOptions
+     * @param ConnectorInterface $connector
      */
-    public function __construct($server, $port, $user, $pass, $vhost = '/', $sslOptions = [])
+    public function __construct(ConnectorInterface $connector)
     {
         $this->logger = new NullLogger();
         $this->serializer = new JsonSerializer();
-        $this->connector = new Connector($server, $port, $user, $pass, $vhost, $sslOptions);
+        $this->connector = $connector;
     }
 
     /**
