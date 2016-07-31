@@ -4,16 +4,24 @@ namespace Retrinko\CottonTail\Connectors;
 
 use PhpAmqpLib\Channel\AMQPChannel;
 use PhpAmqpLib\Connection\AbstractConnection;
-use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Connection\AMQPSSLConnection;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Exception\AMQPExceptionInterface;
 use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
+use Retrinko\CottonTail\Exceptions\ConnectorException;
+use Retrinko\CottonTail\Message\Adaptors\RabbitMQMessageAdaptor;
+use Retrinko\CottonTail\Message\MessageInterface;
 
 class RabbitMQConnector implements ConnectorInterface
 {
     use LoggerAwareTrait;
 
+    /**
+     * @var RabbitMQMessageAdaptor
+     */
+    protected $messageAdaptor;
     /**
      * @var string
      */
@@ -57,6 +65,7 @@ class RabbitMQConnector implements ConnectorInterface
      */
     public function __construct($server, $port, $user, $pass, $vhost = '/', $sslOptions = [])
     {
+        $this->messageAdaptor = new RabbitMQMessageAdaptor();
         $this->logger = new NullLogger();
         $this->server = $server;
         $this->port = $port;
@@ -64,6 +73,14 @@ class RabbitMQConnector implements ConnectorInterface
         $this->pass = $pass;
         $this->vhost = $vhost;
         $this->sslOptions = $sslOptions;
+    }
+
+    /**
+     * @return RabbitMQMessageAdaptor
+     */
+    public function getMesageAdaptor()
+    {
+        return $this->messageAdaptor;
     }
 
     /**
@@ -83,9 +100,9 @@ class RabbitMQConnector implements ConnectorInterface
         if ($this->connection instanceof AbstractConnection)
         {
             $this->connection->close();
-            $this->logger->info('Connection clossed!', ['server'=>$this->server,
-                                                        'port'=>$this->port,
-                                                        'vhost'=>$this->vhost]);
+            $this->logger->info('Connection clossed!', ['server' => $this->server,
+                                                        'port' => $this->port,
+                                                        'vhost' => $this->vhost]);
         }
         $this->connection = null;
     }
@@ -112,9 +129,11 @@ class RabbitMQConnector implements ConnectorInterface
     public function connect($forceReconnection = false)
     {
         $useSslConnection = !empty($this->sslOptions);
-        $env = ['server'=>$this->server, 'port'=>$this->port, 'vhost'=>$this->vhost, 
-                'ssl'=>$useSslConnection];
-        if (true == $forceReconnection || false == ($this->connection instanceof AMQPStreamConnection))
+        $env = ['server' => $this->server, 'port' => $this->port, 'vhost' => $this->vhost,
+                'ssl' => $useSslConnection];
+        if (true == $forceReconnection
+            || false == ($this->connection instanceof AMQPStreamConnection)
+        )
         {
             $this->logger->debug('Stablishing connection...', $env);
             if ($useSslConnection)
@@ -174,16 +193,19 @@ class RabbitMQConnector implements ConnectorInterface
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
+     * @param MessageInterface $message
      * @param string $exchangeName Destination xchange name.
      * @param string $routingKeyOrQueueName Routing key (if xchange is set) or the destination
      *     queue name.
      *
      * @return void
      */
-    public function basicPublish(AMQPMessage $amqpMessage, $exchangeName = '',
+    public function basicPublish(MessageInterface $message,
+                                 $exchangeName = '',
                                  $routingKeyOrQueueName = '')
     {
+        /** @var AMQPMessage $amqpMessage */
+        $amqpMessage = $this->messageAdaptor->fromMessageInterface($message);
         $currentMessageProperties = $amqpMessage->get_properties();
         if (!isset($currentMessageProperties['timestamp']))
         {
@@ -197,11 +219,28 @@ class RabbitMQConnector implements ConnectorInterface
     /**
      * @param string $queueName
      * @param callable $callback
+     *
+     * @throws ConnectorException
+     * @throws \Exception
      */
     public function basicConsume($queueName, $callback)
     {
         $this->logger->info(sprintf('Comsuming queue "%s"...', $queueName));
-        $this->channel->basic_consume($queueName, '', false, false, false, false, $callback);
+        try
+        {
+            $this->channel->basic_consume($queueName, '', false, false, false, false, $callback);
+        }
+        catch (\Exception $e)
+        {
+            if ($e instanceof AMQPExceptionInterface)
+            {
+                throw ConnectorException::internalException($e);
+            }
+            else
+            {
+                throw $e;
+            }
+        }
     }
 
     /**
@@ -231,33 +270,60 @@ class RabbitMQConnector implements ConnectorInterface
     }
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $message
+     *
+     * @throws ConnectorException
      */
-    public function basicAck(AMQPMessage $message)
+    public function basicAck(MessageInterface $message)
     {
-        $message->delivery_info['channel']->basic_ack($message->delivery_info['delivery_tag']);
-        $this->logger->notice('ACK sent!', ['body' => $message->body,
-                                            'properties' => $message->get_properties()]);
+        /** @var AMQPMessage $amqpMessage */
+        $amqpMessage = $message->getOriginalMessage();
+        if (!$amqpMessage instanceof AMQPMessage)
+        {
+            throw ConnectorException::invalidOriginalMessageType(AMQPMessage::class,
+                                                                 get_class($message));
+        }
+        $amqpMessage->delivery_info['channel']->basic_ack($amqpMessage->delivery_info['delivery_tag']);
+        $this->logger->notice('ACK sent!', ['body' => $amqpMessage->body,
+                                            'properties' => $amqpMessage->get_properties()]);
     }
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $message
      * @param bool $requeueMessage
+     *
+     * @throws ConnectorException
      */
-    public function basicReject(AMQPMessage $message, $requeueMessage = false)
+    public function basicReject(MessageInterface $message, $requeueMessage = false)
     {
-        $message->delivery_info['channel']
-            ->basic_reject($message->delivery_info['delivery_tag'], $requeueMessage);
-        $this->logger->notice('NACK sent!', ['body' => $message->body,
-                                             'properties' => $message->get_properties()]);
+        /** @var AMQPMessage $amqpMessage */
+        $amqpMessage = $message->getOriginalMessage();
+        if (!$amqpMessage instanceof AMQPMessage)
+        {
+            throw ConnectorException::invalidOriginalMessageType(AMQPMessage::class,
+                                                                 get_class($message));
+        }
+        $amqpMessage->delivery_info['channel']
+            ->basic_reject($amqpMessage->delivery_info['delivery_tag'], $requeueMessage);
+        $this->logger->notice('NACK sent!', ['body' => $amqpMessage->body,
+                                             'properties' => $amqpMessage->get_properties()]);
     }
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $message
+     *
+     * @throws ConnectorException
      */
-    public function basicCancel(AMQPMessage $message)
+    public function basicCancel(MessageInterface $message)
     {
-        $this->channel->basic_cancel($message->delivery_info['consumer_tag']);
+        /** @var AMQPMessage $amqpMessage */
+        $amqpMessage = $message->getOriginalMessage();
+        if (!$amqpMessage instanceof AMQPMessage)
+        {
+            throw ConnectorException::invalidOriginalMessageType(AMQPMessage::class,
+                                                                 get_class($message));
+        }
+        $this->channel->basic_cancel($amqpMessage->delivery_info['consumer_tag']);
         $this->logger->info(sprintf('Message consumption stopped!'));
     }
 
