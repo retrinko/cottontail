@@ -1,11 +1,17 @@
 <?php
 namespace Retrinko\CottonTail\Connectors;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareInterface;
+use Retrinko\CottonTail\Message\Adaptors\MessageAdaptorInterface;
+use Retrinko\CottonTail\Message\MessageInterface;
 
 interface ConnectorInterface extends LoggerAwareInterface
 {
+    /**
+     * @return MessageAdaptorInterface
+     */
+    public function getMesageAdaptor();
+
     /**
      * @return void
      */
@@ -26,14 +32,14 @@ interface ConnectorInterface extends LoggerAwareInterface
     public function declareQueue($queueName = '');
 
     /**
-     * @param AMQPMessage $amqpMessage
+     * @param MessageInterface $message
      * @param string $exchangeName Destination xchange name.
      * @param string $routingKeyOrQueueName Routing key (if xchange is set) or the destination
      *     queue name.
      *
      * @return void
      */
-    public function basicPublish(AMQPMessage $amqpMessage, $exchangeName = '',
+    public function basicPublish(MessageInterface $message, $exchangeName = '',
                                  $routingKeyOrQueueName = '');
 
     /**
@@ -58,18 +64,18 @@ interface ConnectorInterface extends LoggerAwareInterface
     public function getChannelCallbacks();
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $amqpMessage
      */
-    public function basicAck(AMQPMessage $message);
+    public function basicAck(MessageInterface $amqpMessage);
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $message
      * @param bool $requeueMessage
      */
-    public function basicReject(AMQPMessage $message, $requeueMessage = false);
+    public function basicReject(MessageInterface $message, $requeueMessage = false);
 
     /**
-     * @param AMQPMessage $message
+     * @param MessageInterface $message
      */
-    public function basicCancel(AMQPMessage $message);
+    public function basicCancel(MessageInterface $message);
 }

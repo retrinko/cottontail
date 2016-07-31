@@ -2,14 +2,11 @@
 
 namespace Retrinko\CottonTail\Subscriber;
 
-use PhpAmqpLib\Exception\AMQPProtocolConnectionException;
-use PhpAmqpLib\Exception\AMQPRuntimeException;
-use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
-use Retrinko\CottonTail\Message\MessageFactory;
+use Retrinko\CottonTail\Exceptions\ConnectorException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\Serializer\Serializers\JsonSerializer;
 use Retrinko\Serializer\Traits\SerializerAwareTrait;
@@ -102,9 +99,9 @@ abstract class AbstractSubscriber
     protected function getCallback()
     {
         $server = $this;
-        $callback = function ($amqpMessage) use ($server)
+        $callback = function ($receivedMessage) use ($server)
         {
-            $server->onMessage($amqpMessage);
+            $server->onMessage($this->connector->getMesageAdaptor()->toMessageInterface($receivedMessage));
         };
 
         return $callback;
@@ -129,13 +126,7 @@ abstract class AbstractSubscriber
             // Close connection
             $this->connector->closeConnection();
         }
-        catch (AMQPProtocolConnectionException $e)
-        {
-            $this->logger->warning($e->getMessage());
-            // Try reconnection
-            $this->connector->connect(true);
-        }
-        catch (AMQPRuntimeException $e)
+        catch (ConnectorException $e)
         {
             $this->logger->warning($e->getMessage());
             // Try reconnection
@@ -155,14 +146,14 @@ abstract class AbstractSubscriber
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
+     * @param MessageInterface $receivedMessage
      */
-    final protected function onMessage(AMQPMessage $amqpMessage)
+    final protected function onMessage(MessageInterface $receivedMessage)
     {
         try
         {
             $this->numberOfReceivedMessages++;
-            $this->currentReceivedMessage = MessageFactory::byAMQPMessage($amqpMessage);
+            $this->currentReceivedMessage = $receivedMessage;
 
             $this->logger->debug(sprintf('Processing message %s of %s...',
                                          $this->numberOfReceivedMessages,
@@ -172,7 +163,7 @@ abstract class AbstractSubscriber
             // Process message
             $this->callback();
             // Send ACK
-            $this->connector->basicAck($amqpMessage);
+            $this->connector->basicAck($receivedMessage);
 
         }
         catch (\Exception $e)
@@ -184,7 +175,7 @@ abstract class AbstractSubscriber
                                      'file' => $e->getFile(),
                                      'line' => $e->getLine()]]);
             // Reject and requeue message if needed
-            $this->connector->basicReject($amqpMessage, $this->requeueMessagesOnCallbackFails);
+            $this->connector->basicReject($receivedMessage, $this->requeueMessagesOnCallbackFails);
         }
 
         // Cancel consumption when limit reached ($this->numberOfMessagesToConsume)
@@ -193,7 +184,7 @@ abstract class AbstractSubscriber
         {
             $this->logger->info(sprintf('Consumption limit reached! (limit: %s)',
                                         $this->numberOfMessagesToConsume));
-            $this->connector->basicCancel($amqpMessage);
+            $this->connector->basicCancel($receivedMessage);
         }
     }
 

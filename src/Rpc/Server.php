@@ -3,14 +3,14 @@
 
 namespace Retrinko\CottonTail\Rpc;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
-use Retrinko\CottonTail\Exceptions\ExecutionException;
+use Retrinko\CottonTail\Exceptions\RpcExecutionException;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Exceptions\RemoteProcedureException;
+use Retrinko\CottonTail\Message\MessagesBuilder;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
@@ -104,9 +104,9 @@ class Server
     protected function getCallback()
     {
         $server = $this;
-        $callback = function ($amqpMessage) use ($server)
+        $callback = function ($receivedMessage) use ($server)
         {
-            $server->onRequest($amqpMessage);
+            $server->onRequest($this->connector->getMesageAdaptor()->toMessageInterface($receivedMessage));
         };
 
         return $callback;
@@ -115,26 +115,21 @@ class Server
     /**
      * Strategy: preCallback() -> callback() -> postCallback()
      *
-     * @param AMQPMessage $request
+     * @param RpcRequestMessage $request
      */
-    final protected function onRequest($request)
+    final protected function onRequest(RpcRequestMessage $request)
     {
+        // Reset possible previous values
+        $this->currentRequest = null;
         try
         {
-            $this->logger->notice('Message received!', ['body' => $request->body,
-                                                        'properties' => $request->get_properties()]);
+            $this->logger->notice('Message received!', ['body' => $request->getBody(),
+                                                        'properties' => $request->getProperties()]);
+            $this->currentRequest = $request;
 
-            // Reset possible previous $this->currentRequest;
-            $this->currentRequest = null;
-
-            // Create empty response
-            $this->currentResponse = new RpcResponseMessage();
-
-            // Load request message
-            $this->currentRequest = RpcRequestMessage::loadAMQPMessage($request);
-            $this->currentResponse->setCorrelationId($this->currentRequest->getCorrelationId());
-            $this->currentResponse->setContentType($this->serializer->getSerializedContentType());
-
+            // Create an empty response
+            $this->currentResponse = MessagesBuilder::emptyRpcResponse($this->getSerializer()->getSerializedContentType(),
+                                                                       $this->currentRequest->getCorrelationId());
             //  Execute callback strategy
             $this->preCallback();
             $this->callback();
@@ -168,7 +163,7 @@ class Server
             // Reject and drop conflictive message
             $this->connector->basicReject($request);
         }
-        catch (ExecutionException $e)
+        catch (RpcExecutionException $e)
         {
             $this->logger->warning($e->getMessage());
             $responsePayload = RpcResponsePayload::create()
@@ -202,10 +197,6 @@ class Server
      */
     protected function callback()
     {
-        // Create empty response
-        $this->currentResponse = new RpcResponseMessage();
-        $this->currentResponse->setContentType($this->serializer->getSerializedContentType());
-
         $procedure = $this->currentRequest->getPayload()->getProcedure();
         $params = $this->currentRequest->getPayload()->getParams();
 
@@ -222,7 +213,7 @@ class Server
         }
         catch (\Exception $e)
         {
-            throw ExecutionException::executionError($e->getMessage());
+            throw RpcExecutionException::executionError($e->getMessage());
         }
     }
 
@@ -248,8 +239,7 @@ class Server
             $response->setCorrelationId($correlationId);
 
             // Publish reponse message
-            $this->connector->basicPublish($response->toAMQPMessage(), '',
-                                           $this->currentRequest->getReplyTo());
+            $this->connector->basicPublish($response, '', $this->currentRequest->getReplyTo());
         }
         else
         {

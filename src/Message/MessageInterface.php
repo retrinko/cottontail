@@ -4,10 +4,7 @@
 namespace Retrinko\CottonTail\Message;
 
 
-use PhpAmqpLib\Message\AMQPMessage;
-use Retrinko\CottonTail\Exceptions\MessageException;
-
-interface MessageInterface
+interface MessageInterface extends OriginalMessageWrapperInterface
 {
     const PROPERTY_CONTENT_TYPE   = 'content_type';
     const PROPERTY_CORRELATION_ID = 'correlation_id';
@@ -35,6 +32,14 @@ interface MessageInterface
     public function getProperty($name, $default = '');
 
     /**
+     * @param string $name
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function setProperty($name, $value);
+
+    /**
      * @return int
      */
     public function getTimestamp();
@@ -50,22 +55,9 @@ interface MessageInterface
     public function getContentType();
 
     /**
-     * @param AMQPMessage $amqpMessage
-     *
-     * @return static
-     * @throws MessageException
-     */
-    public static function loadAMQPMessage(AMQPMessage $amqpMessage);
-
-    /**
      * @return array
      */
     public function getRequiredProperties();
-
-    /**
-     * @return AMQPMessage
-     */
-    public function toAMQPMessage();
 
     /**
      * @return string
