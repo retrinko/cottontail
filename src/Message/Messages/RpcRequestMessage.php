@@ -32,7 +32,6 @@ class RpcRequestMessage extends BasicMessage
         }
         $this->checkRequiredPropertiesPresence($properties);
         parent::__construct($body, $properties);
-        $this->setType(MessageInterface::TYPE_RPC_REQUEST);
     }
 
     /**

@@ -26,7 +26,6 @@ class RpcResponseMessage extends BasicMessage
         // Override MessageInterface::PROPERTY_TYPE
         $properties[MessageInterface::PROPERTY_TYPE] = MessageInterface::TYPE_RPC_RESPONSE;
         parent::__construct($body, $properties);
-        $this->setType(MessageInterface::TYPE_RPC_RESPONSE);
     }
 
     /**
