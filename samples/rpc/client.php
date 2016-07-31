@@ -30,7 +30,15 @@ try
     $client->setLogger($logger);
 
     $response = $client->call($destination, $remoteProcedure, $params);
-    var_dump($response);
+    if($response->isOK())
+    {
+        $logger->notice('OK Response received!');
+        var_dump($response->getData());
+    }
+    else
+    {
+        $logger->error('Error response received', $response->getErrors());
+    }
 }
 catch (\Exception $e)
 {
