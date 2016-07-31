@@ -3,7 +3,6 @@
 
 namespace Retrinko\CottonTail\Message\Messages;
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\PayloadInterface;
@@ -23,6 +22,10 @@ class BasicMessage implements MessageInterface
      * @var array
      */
     protected $requiredProperties = [];
+    /**
+     * @var mixed
+     */
+    protected $originalMessage;
 
     /**
      * @param string $body
@@ -30,8 +33,9 @@ class BasicMessage implements MessageInterface
      *
      * @throws MessageException
      */
-    public function __construct($body = '', $properties = [])
+    public function __construct($body = '', array $properties = [])
     {
+        $this->checkRequiredPropertiesPresence($properties);
         $this->body = $body;
         $this->properties = $properties;
 
@@ -129,29 +133,15 @@ class BasicMessage implements MessageInterface
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
-     *
-     * @return static
-     * @throws MessageException
-     */
-    public static function loadAMQPMessage(AMQPMessage $amqpMessage)
-    {
-        $message = new static($amqpMessage->body, $amqpMessage->get_properties());
-        $message->checkRequiredPropertiesPresence($amqpMessage);
-
-        return $message;
-    }
-
-    /**
-     * @param AMQPMessage $amqpMessage
+     * @param array $properties
      *
      * @throws MessageException
      */
-    protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
+    protected function checkRequiredPropertiesPresence(array $properties)
     {
         foreach ($this->getRequiredProperties() as $requiredProperty)
         {
-            if (!array_key_exists($requiredProperty, $amqpMessage->get_properties()))
+            if (!array_key_exists($requiredProperty, $properties))
             {
                 throw MessageException::requiredPropertyMissing($requiredProperty);
             }
@@ -176,14 +166,6 @@ class BasicMessage implements MessageInterface
         $this->requiredProperties = $requiredProperties;
 
         return $this;
-    }
-
-    /**
-     * @return AMQPMessage
-     */
-    public function toAMQPMessage()
-    {
-        return new AMQPMessage($this->getBody(), $this->getProperties());
     }
 
     /**
@@ -364,4 +346,21 @@ class BasicMessage implements MessageInterface
         $this->setBody($data->serialize(SerializerFactory::bySerializedContentType($contentType)));
     }
 
+    /**
+     * @param mixed $message
+     *
+     * @return void
+     */
+    public function setOriginalMessage($message)
+    {
+        $this->originalMessage = $message;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getOriginalMessage()
+    {
+        return $this->originalMessage;
+    }
 }

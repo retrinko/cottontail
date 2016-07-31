@@ -4,7 +4,6 @@
 namespace Retrinko\CottonTail\Message\Messages;
 
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Payloads\RpcRequestPayload;
@@ -22,8 +21,16 @@ class RpcRequestMessage extends BasicMessage
      * @param string $body
      * @param array $properties
      */
-    public function __construct($body = '', $properties = [])
+    public function __construct($body = '', array $properties)
     {
+        // Override MessageInterface::PROPERTY_TYPE
+        $properties[MessageInterface::PROPERTY_TYPE] = MessageInterface::TYPE_RPC_REQUEST;
+        // Generate a correlation id if not provided
+        if (!isset($properties[MessageInterface::PROPERTY_CORRELATION_ID]))
+        {
+            $properties[MessageInterface::PROPERTY_CORRELATION_ID] = $this->generateCorrelationId();
+        }
+        $this->checkRequiredPropertiesPresence($properties);
         parent::__construct($body, $properties);
         $this->setType(MessageInterface::TYPE_RPC_REQUEST);
     }
@@ -33,7 +40,7 @@ class RpcRequestMessage extends BasicMessage
      *
      * @return string
      */
-    public function generateCorrelationId($prefix = '')
+    protected function generateCorrelationId($prefix = '')
     {
         return ('' == trim($prefix))
             ? uniqid()
@@ -51,14 +58,14 @@ class RpcRequestMessage extends BasicMessage
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
+     * @param array $properties
      *
      * @throws MessageException
      */
-    protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
+    protected function checkRequiredPropertiesPresence(array $properties)
     {
-        parent::checkRequiredPropertiesPresence($amqpMessage);
-        if (MessageInterface::TYPE_RPC_REQUEST != $amqpMessage->get(MessageInterface::PROPERTY_TYPE))
+        parent::checkRequiredPropertiesPresence($properties);
+        if (MessageInterface::TYPE_RPC_REQUEST != $properties[MessageInterface::PROPERTY_TYPE])
         {
             throw MessageException::wrongMessageType($this->getType(),
                                                      MessageInterface::TYPE_RPC_REQUEST);

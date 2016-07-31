@@ -4,7 +4,6 @@
 namespace Retrinko\CottonTail\Message\Messages;
 
 
-use PhpAmqpLib\Message\AMQPMessage;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
@@ -22,8 +21,10 @@ class RpcResponseMessage extends BasicMessage
      * @param string $body
      * @param array $properties
      */
-    public function __construct($body = '', $properties = [])
+    public function __construct($body = '', array $properties = [])
     {
+        // Override MessageInterface::PROPERTY_TYPE
+        $properties[MessageInterface::PROPERTY_TYPE] = MessageInterface::TYPE_RPC_RESPONSE;
         parent::__construct($body, $properties);
         $this->setType(MessageInterface::TYPE_RPC_RESPONSE);
     }
@@ -39,14 +40,14 @@ class RpcResponseMessage extends BasicMessage
     }
 
     /**
-     * @param AMQPMessage $amqpMessage
+     * @param array $properties
      *
      * @throws MessageException
      */
-    protected function checkRequiredPropertiesPresence(AMQPMessage $amqpMessage)
+    protected function checkRequiredPropertiesPresence(array $properties)
     {
-        parent::checkRequiredPropertiesPresence($amqpMessage);
-        if (MessageInterface::TYPE_RPC_RESPONSE != $amqpMessage->get(MessageInterface::PROPERTY_TYPE))
+        parent::checkRequiredPropertiesPresence($properties);
+        if (MessageInterface::TYPE_RPC_RESPONSE != $properties[MessageInterface::PROPERTY_TYPE])
         {
             throw MessageException::wrongMessageType($this->getType(),
                                                      MessageInterface::TYPE_RPC_REQUEST);
