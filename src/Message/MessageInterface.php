@@ -102,7 +102,7 @@ interface MessageInterface extends OriginalMessageWrapperInterface
     public function getUserId();
 
     /**
-     * @return mixed
+     * @return PayloadInterface
      * @throws \Retrinko\Serializer\Exceptions\Exception
      */
     public function getPayload();
