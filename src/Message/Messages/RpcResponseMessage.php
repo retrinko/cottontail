@@ -33,7 +33,7 @@ class RpcResponseMessage extends BasicMessage
      */
     public function getPayload()
     {
-        $data = parent::getPayload();
+        $data = parent::getPayload()->getData();
 
         return new RpcResponsePayload($data);
     }

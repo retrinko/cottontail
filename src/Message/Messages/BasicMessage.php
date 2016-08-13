@@ -6,6 +6,7 @@ namespace Retrinko\CottonTail\Message\Messages;
 use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\PayloadInterface;
+use Retrinko\CottonTail\Message\Payloads\DefaultPayload;
 use Retrinko\Serializer\SerializerFactory;
 
 class BasicMessage implements MessageInterface
@@ -325,13 +326,14 @@ class BasicMessage implements MessageInterface
     }
 
     /**
-     * @return mixed
+     * @return DefaultPayload
      * @throws \Retrinko\Serializer\Exceptions\Exception
      */
     public function getPayload()
     {
-        return SerializerFactory::bySerializedContentType($this->getContentType())
-                                ->unserialize($this->getBody());
+        $serializer = SerializerFactory::bySerializedContentType($this->getContentType());
+
+        return new DefaultPayload($serializer->unserialize($this->getBody()));
     }
 
     /**
