@@ -21,7 +21,7 @@ class RpcResponseMessage extends BasicMessage
      * @param string $body
      * @param array $properties
      */
-    public function __construct($body = '', array $properties = [])
+    public function __construct($body = '', array $properties)
     {
         // Override MessageInterface::PROPERTY_TYPE
         $properties[MessageInterface::PROPERTY_TYPE] = MessageInterface::TYPE_RPC_RESPONSE;
