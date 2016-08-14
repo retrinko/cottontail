@@ -39,7 +39,8 @@ class RpcRequestPayload extends DefaultPayload
      */
     public function getParams()
     {
-        return $this->data[self::KEY_PARAMS];
+        return is_array($this->data) && array_key_exists(self::KEY_PARAMS, $this->data)
+            ? $this->data[self::KEY_PARAMS] : [];
     }
 
     /**
@@ -47,7 +48,8 @@ class RpcRequestPayload extends DefaultPayload
      */
     public function getProcedure()
     {
-        return $this->data[self::KEY_PROCEDURE];
+        return is_array($this->data) && array_key_exists(self::KEY_PROCEDURE ,$this->data)
+            ? $this->data[self::KEY_PROCEDURE] : '';
     }
 
 }

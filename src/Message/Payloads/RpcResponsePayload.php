@@ -8,8 +8,9 @@ use Retrinko\CottonTail\Exceptions\PayloadException;
 
 class RpcResponsePayload extends DefaultPayload
 {
-    const STATUS_CODE_SUCCESS = 200;
-    const STATUS_CODE_ERROR   = 500;
+    const STATUS_CODE_UNDEFINED = 0;
+    const STATUS_CODE_SUCCESS   = 200;
+    const STATUS_CODE_ERROR     = 500;
 
     const KEY_STATUS   = 'status';
     const KEY_RESPONSE = 'response';
@@ -55,7 +56,9 @@ class RpcResponsePayload extends DefaultPayload
      */
     public function getStatus()
     {
-        return $this->data[self::KEY_STATUS];
+        return is_array($this->data) && array_key_exists(self::KEY_STATUS, $this->data)
+            ? $this->data[self::KEY_STATUS]
+            : self::STATUS_CODE_UNDEFINED;
     }
 
     /**
@@ -112,7 +115,8 @@ class RpcResponsePayload extends DefaultPayload
      */
     public function getErrors()
     {
-        return $this->data[self::KEY_ERRORS];
+        return is_array($this->data) && array_key_exists(self::KEY_ERRORS, $this->data)
+            ? $this->data[self::KEY_ERRORS] : [];
     }
 
     /**
@@ -120,7 +124,8 @@ class RpcResponsePayload extends DefaultPayload
      */
     public function getResponse()
     {
-        return $this->data[self::KEY_RESPONSE];
+        return is_array($this->data) && array_key_exists(self::KEY_RESPONSE, $this->data)
+            ? $this->data[self::KEY_RESPONSE] : '';
     }
 
     /**
