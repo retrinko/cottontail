@@ -100,11 +100,11 @@ class RpcResponsePayload extends DefaultPayload
     }
 
     /**
-     * @return int
+     * @return bool
      */
     public function hasErrors()
     {
-        return count($this->getErrors());
+        return count($this->getErrors()) > 0;
     }
 
     /**
