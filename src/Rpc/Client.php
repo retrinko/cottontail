@@ -232,7 +232,7 @@ class Client
         }
         catch (\Exception $e)
         {
-            // Create an error response an reject message
+            // Create an error response and reject message
             $responsePayload = RpcResponsePayload::create()->addError($e->getMessage());
             $this->rpcResponse = MessagesBuilder::emptyRpcResponse($this->getSerializer()->getSerializedContentType(),
                                                                    $this->correlarionId);
