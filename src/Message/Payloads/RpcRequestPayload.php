@@ -3,6 +3,8 @@
 
 namespace Retrinko\CottonTail\Message\Payloads;
 
+use Retrinko\CottonTail\Exceptions\PayloadException;
+
 class RpcRequestPayload extends DefaultPayload
 {
     const KEY_PARAMS    = 'params';
@@ -18,9 +20,14 @@ class RpcRequestPayload extends DefaultPayload
      * @param array $params
      *
      * @return RpcRequestPayload
+     * @throws PayloadException
      */
     public static function create($procedure, $params = [])
     {
+        if (empty($procedure))
+        {
+            throw PayloadException::emptyProcedute();
+        }
         $data = [self::KEY_PROCEDURE => $procedure,
                  self::KEY_PARAMS => $params];
 
