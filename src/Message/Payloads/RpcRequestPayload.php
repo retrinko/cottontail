@@ -26,7 +26,7 @@ class RpcRequestPayload extends DefaultPayload
     {
         if (empty($procedure))
         {
-            throw PayloadException::emptyProcedute();
+            throw PayloadException::emptyProcedure();
         }
         $data = [self::KEY_PROCEDURE => $procedure,
                  self::KEY_PARAMS => $params];
