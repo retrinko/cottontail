@@ -29,8 +29,12 @@ class RpcResponsePayload extends DefaultPayload
      *
      * @return RpcResponsePayload
      */
-    public static function create($response = '', $status = self::STATUS_CODE_SUCCESS, $errors = [])
+    public static function create($response = '', $status = self::STATUS_CODE_SUCCESS, array $errors = [])
     {
+        if (count($errors) > 0 && $status < self::STATUS_CODE_ERROR)
+        {
+            $status = self::STATUS_CODE_ERROR;
+        }
         $data = [self::KEY_STATUS => $status,
                  self::KEY_RESPONSE => $response,
                  self::KEY_ERRORS => $errors];
