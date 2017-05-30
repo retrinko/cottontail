@@ -14,6 +14,7 @@ interface MessageInterface extends OriginalMessageWrapperInterface
     const PROPERTY_USER_ID        = 'user_id';
     const PROPERTY_APP_ID         = 'app_id';
     const PROPERTY_TYPE           = 'type';
+    const PROPERTY_DELIVERY_MODE  = 'delivery_mode';
 
     const TYPE_RPC_REQUEST  = 'rpc-request';
     const TYPE_RPC_RESPONSE = 'rpc-response';
