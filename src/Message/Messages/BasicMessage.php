@@ -312,6 +312,24 @@ class BasicMessage implements MessageInterface
     }
 
     /**
+     * @return int
+     */
+    public function getDeliveryMode()
+    {
+        return $this->getProperty(MessageInterface::PROPERTY_DELIVERY_MODE);
+    }
+
+    /**
+     * @param int $deliveryMode 1: AMQPMessage::DELIVERY_MODE_NON_PERSISTENT, 2: AMQPMessage::DELIVERY_MODE_PERSISTENT
+     *
+     * @return BasicMessage
+     */
+    public function setDeliveryMode($deliveryMode)
+    {
+        return $this->setProperty(MessageInterface::PROPERTY_DELIVERY_MODE, $deliveryMode);
+    }
+
+    /**
      * @param string $string
      * @param string $contentType
      *
