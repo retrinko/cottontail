@@ -103,6 +103,11 @@ interface MessageInterface extends OriginalMessageWrapperInterface
     public function getUserId();
 
     /**
+     * @return int
+     */
+    public function getDeliveryMode();
+
+    /**
      * @return PayloadInterface
      * @throws \Retrinko\Serializer\Exceptions\Exception
      */
