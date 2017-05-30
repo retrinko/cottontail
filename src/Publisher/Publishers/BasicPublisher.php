@@ -43,6 +43,10 @@ class BasicPublisher implements PublisherInterface
      * @var bool
      */
     protected $publishOnExchange = false;
+    /**
+     * @var int
+     */
+    protected $deliveryMode = MessageInterface::DELIVERY_MODE_NON_PERSISTENT;
 
     /**
      * @param ConnectorInterface $connector
@@ -61,6 +65,22 @@ class BasicPublisher implements PublisherInterface
     {
         $this->logger = $logger;
         $this->connector->setLogger($logger);
+    }
+
+    /**
+     * @param int $deliveryMode MessageInterface::DELIVERY_MODE_NON_PERSISTENT|MessageInterface::DELIVERY_MODE_PERSISTENT
+     */
+    public function setDeliveryMode($deliveryMode)
+    {
+        $this->deliveryMode = $deliveryMode;
+    }
+
+    /**
+     * @return int
+     */
+    public function getDeliveryMode()
+    {
+        return $this->deliveryMode;
     }
 
     /**
@@ -100,6 +120,7 @@ class BasicPublisher implements PublisherInterface
 
         // Compose message
         $message = new BasicMessage($this->getSerializer()->serialize($data));
+        $message->setDeliveryMode($this->getDeliveryMode());
         $message->setContentType($this->getSerializer()->getSerializedContentType());
 
         // Publish message
