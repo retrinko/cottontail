@@ -3,7 +3,7 @@
 
 namespace Retrinko\CottonTail\Message;
 
-use Retrinko\Serializer\Interfaces\SerializerInterface;
+use Retrinko\CottonTail\Serializer\SerializerInterface;
 
 interface PayloadInterface
 {

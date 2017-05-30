@@ -11,8 +11,8 @@ use Retrinko\CottonTail\Exceptions\PublisherException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\Messages\BasicMessage;
 use Retrinko\CottonTail\Publisher\PublisherInterface;
-use Retrinko\Serializer\Serializers\JsonSerializer;
-use Retrinko\Serializer\Traits\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\Serializers\JsonSerializer;
 
 class BasicPublisher implements PublisherInterface
 {

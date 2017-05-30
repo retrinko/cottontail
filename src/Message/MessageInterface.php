@@ -112,7 +112,6 @@ interface MessageInterface extends OriginalMessageWrapperInterface
 
     /**
      * @return PayloadInterface
-     * @throws \Retrinko\Serializer\Exceptions\Exception
      */
     public function getPayload();
 

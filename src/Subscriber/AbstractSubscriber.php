@@ -8,8 +8,8 @@ use Psr\Log\NullLogger;
 use Retrinko\CottonTail\Connectors\ConnectorInterface;
 use Retrinko\CottonTail\Exceptions\ConnectorException;
 use Retrinko\CottonTail\Message\MessageInterface;
-use Retrinko\Serializer\Serializers\JsonSerializer;
-use Retrinko\Serializer\Traits\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\Serializers\JsonSerializer;
 
 abstract class AbstractSubscriber
 {

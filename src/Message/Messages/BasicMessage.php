@@ -7,7 +7,7 @@ use Retrinko\CottonTail\Exceptions\MessageException;
 use Retrinko\CottonTail\Message\MessageInterface;
 use Retrinko\CottonTail\Message\PayloadInterface;
 use Retrinko\CottonTail\Message\Payloads\DefaultPayload;
-use Retrinko\Serializer\SerializerFactory;
+use Retrinko\CottonTail\Serializer\SerializersRegistry;
 
 class BasicMessage implements MessageInterface
 {
@@ -346,25 +346,21 @@ class BasicMessage implements MessageInterface
 
     /**
      * @return DefaultPayload
-     * @throws \Retrinko\Serializer\Exceptions\Exception
      */
     public function getPayload()
     {
-        $serializer = SerializerFactory::bySerializedContentType($this->getContentType());
-
+        $serializer = SerializersRegistry::i()->getSerializer($this->getContentType());
         return new DefaultPayload($serializer->unserialize($this->getBody()));
     }
 
     /**
      * @param PayloadInterface $data
      * @param null $contentType
-     *
-     * @throws \Retrinko\Serializer\Exceptions\Exception
      */
     public function setPayload(PayloadInterface $data, $contentType = null)
     {
         $contentType = is_null($contentType) ? $this->getContentType() : $contentType;
-        $this->setBody($data->serialize(SerializerFactory::bySerializedContentType($contentType)));
+        $this->setBody($data->serialize(SerializersRegistry::i()->getSerializer($contentType)));
     }
 
     /**

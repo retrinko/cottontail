@@ -4,7 +4,7 @@
 namespace Retrinko\CottonTail\Publisher;
 
 
-use Retrinko\Serializer\Interfaces\SerializerInterface;
+use Retrinko\CottonTail\Serializer\SerializerInterface;
 
 interface PublisherInterface
 {

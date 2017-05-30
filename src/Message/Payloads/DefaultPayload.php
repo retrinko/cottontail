@@ -6,7 +6,7 @@ namespace Retrinko\CottonTail\Message\Payloads;
 
 use Retrinko\CottonTail\Exceptions\PayloadException;
 use Retrinko\CottonTail\Message\PayloadInterface;
-use Retrinko\Serializer\Interfaces\SerializerInterface;
+use Retrinko\CottonTail\Serializer\SerializerInterface;
 
 class DefaultPayload implements PayloadInterface
 {

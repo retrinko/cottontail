@@ -14,8 +14,8 @@ use Retrinko\CottonTail\Message\MessagesBuilder;
 use Retrinko\CottonTail\Message\Payloads\RpcResponsePayload;
 use Retrinko\CottonTail\Message\Messages\RpcRequestMessage;
 use Retrinko\CottonTail\Message\Messages\RpcResponseMessage;
-use Retrinko\Serializer\Serializers\JsonSerializer;
-use Retrinko\Serializer\Traits\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\SerializerAwareTrait;
+use Retrinko\CottonTail\Serializer\Serializers\JsonSerializer;
 
 /**
  * Class Server
