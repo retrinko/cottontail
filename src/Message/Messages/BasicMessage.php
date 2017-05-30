@@ -320,7 +320,8 @@ class BasicMessage implements MessageInterface
     }
 
     /**
-     * @param int $deliveryMode 1: AMQPMessage::DELIVERY_MODE_NON_PERSISTENT, 2: AMQPMessage::DELIVERY_MODE_PERSISTENT
+     * @param int $deliveryMode 1: MessageInterface::DELIVERY_MODE_NON_PERSISTENT,
+     *                          2: MessageInterface::DELIVERY_MODE_PERSISTENT
      *
      * @return BasicMessage
      */
