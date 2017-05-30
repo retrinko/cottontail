@@ -24,6 +24,9 @@ interface MessageInterface extends OriginalMessageWrapperInterface
     const CONTENT_TYPE_PHP        = 'application/php/serialize/base64_encode';
     const CONTENT_TYPE_PLAIN_TEXT = 'text/plain';
 
+    const DELIVERY_MODE_NON_PERSISTENT = 1;
+    const DELIVERY_MODE_PERSISTENT     = 2;
+
     /**
      * @param string $name
      * @param string $default
