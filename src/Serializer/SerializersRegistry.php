@@ -48,11 +48,10 @@ class SerializersRegistry
 
     /**
      * @param SerializerInterface $serializer
-     * @param string $contentType
      */
-    public function registerSerializer(SerializerInterface $serializer, $contentType)
+    public function registerSerializer(SerializerInterface $serializer)
     {
-        $this->registry[$contentType] = $serializer;
+        $this->registry[$serializer->getSerializedContentType()] = $serializer;
     }
 
     /**
